@@ -1,0 +1,15 @@
+output   = "models"
+wipe     = true
+no-tests = true
+add-enum-types = true
+struct-tag-casing = "camel"
+
+[psql]
+  dbname = "HOC_TU_VUNG_TIENG_ANH"
+  host   = "localhost"
+  port   = 5432
+  user   = "khang"
+  pass   = "123"
+  schema = "public"
+
+
