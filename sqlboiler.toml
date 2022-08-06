@@ -12,4 +12,11 @@ struct-tag-casing = "camel"
   pass   = "123"
   schema = "public"
 
+[mysql]
+  dbname  = "el"
+  host    = "localhost"
+  port    = 3306
+  user    = "khang"
+  pass    = "bao123"
+  sslmode = "false"
 

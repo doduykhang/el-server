@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -21,57 +22,61 @@ func init() {
 }
 
 func UserServer(router chi.Router) {
-	router.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-		var request dto.RegisterRequest
-		err := json.NewDecoder(r.Body).Decode(&request)
+	router.Post("/register", Register)
+	router.Post("/login", Login)
+	router.Route("/test", TestMw)
+}
 
-		if err != nil {
-			util.SadResp(err, 500, w)
-			return
-		}
+func Register(w http.ResponseWriter, r *http.Request) {
+	var request dto.RegisterRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
 
-		result, err := userBo.RegisterUser(r.Context(), request)
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
 
-		if err != nil {
-			util.SadResp(err, 500, w)
-			return
-		}
+	result, err := userBo.RegisterUser(r.Context(), request)
 
-		util.JSONResp(result, 200, w)
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	var request dto.LoginRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	token, err := userBo.Login(r.Context(), request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	//set cookie
+	expiresAt := time.Now().Add(120 * time.Second)
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   token,
+		Expires: expiresAt,
 	})
 
-	router.Post("/login", func(w http.ResponseWriter, r *http.Request) {
-		var request dto.LoginRequest
-		err := json.NewDecoder(r.Body).Decode(&request)
+	util.JSONResp("Logged in", 200, w)
+}
 
-		if err != nil {
-			util.SadResp(err, 500, w)
-			return
-		}
-
-		result, err := userBo.Login(r.Context(), request)
-
-		if err != nil {
-			util.SadResp(err, 500, w)
-			return
-		}
-
-		//set cookie
-		expiresAt := time.Now().Add(120 * time.Second)
-		http.SetCookie(w, &http.Cookie{
-			Name:    "session_token",
-			Value:   result.FirstName,
-			Expires: expiresAt,
-		})
-
-		util.JSONResp(result, 200, w)
+func TestMw(r chi.Router) {
+	r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		accountID := util.UserIDFromContext(r.Context())
+		util.JSONResp(fmt.Sprintf("you are in %d", accountID), 200, w)
 	})
-
-	router.Route("/test", func(r chi.Router) {
-		r.Use(middlewares.EnsureAuthenticatedJwtMw())
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			util.JSONResp("You are in", 200, w)
-		})
-	})
-
 }
