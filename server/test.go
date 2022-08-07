@@ -25,7 +25,6 @@ func TestRoute(router chi.Router) {
 		r.Post("/", CreateTest)
 		r.Put("/", UpdateTest)
 		r.Delete("/{ID}", DeleteTest)
-
 	})
 
 	router.Get("/{ID}", FindTest)

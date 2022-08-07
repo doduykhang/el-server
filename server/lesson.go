@@ -33,6 +33,7 @@ func LessonRoute(router chi.Router) {
 	router.Get("/{ID}", FindLesson)
 	router.Get("/all", FindLessons)
 	router.Get("/get-words/{ID}", GetWords)
+	router.Get("/get-tests/{ID}", GetWords)
 }
 
 func CreateLesson(w http.ResponseWriter, r *http.Request) {
@@ -167,6 +168,20 @@ func GetWords(w http.ResponseWriter, r *http.Request) {
 	ID, err := util.IDFromStr(IDString)
 
 	result, err := lessonBo.GetWords(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetTests(w http.ResponseWriter, r *http.Request) {
+	IDString := chi.URLParam(r, "ID")
+	ID, err := util.IDFromStr(IDString)
+
+	result, err := lessonBo.GetTests(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

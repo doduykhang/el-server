@@ -28,8 +28,7 @@ func QuestionRoute(router chi.Router) {
 
 	})
 
-	router.Get("/{ID}", FindTest)
-	router.Get("/all", FindTests)
+	router.Get("/options/{ID}", GetOptions)
 }
 
 func CreateQuestion(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +81,24 @@ func DeleteQuestion(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := questionBo.DeleteQuestion(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetOptions(w http.ResponseWriter, r *http.Request) {
+	IDString := chi.URLParam(r, "ID")
+	ID, err := util.IDFromStr(IDString)
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	result, err := questionBo.GetOptions(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

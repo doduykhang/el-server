@@ -14,6 +14,7 @@ func main() {
 		r.Route("/lesson", server.LessonRoute)
 		r.Route("/test", server.TestRoute)
 		r.Route("/question", server.QuestionRoute)
+		r.Route("/option", server.OptionRoute)
 	})
 	http.ListenAndServe(":3000", server.Api)
 }

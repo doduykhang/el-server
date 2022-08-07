@@ -282,3 +282,25 @@ func (lesson *LessonBo) GetWords(ctx context.Context, ID uint) (*models.WordSlic
 	tx.Commit()
 	return &words, nil
 }
+
+func (lesson *LessonBo) GetTests(ctx context.Context, ID uint) (*models.TestSlice, error) {
+	tx, err := lesson.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	tests, err := models.Tests(
+		models.TestWhere.LessonID.EQ(ID),
+	).All(ctx, lesson.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return &tests, nil
+}

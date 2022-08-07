@@ -152,3 +152,26 @@ func (question *QuestionBo) DeleteQuestion(ctx context.Context, ID uint) (*model
 	tx.Commit()
 	return questionModel, nil
 }
+
+func (question *QuestionBo) GetOptions(ctx context.Context, ID uint) (*models.OptionSlice, error) {
+
+	tx, err := question.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	options, err := models.Options(
+		models.OptionWhere.QuestionID.EQ(ID),
+	).All(ctx, question.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return &options, nil
+}
