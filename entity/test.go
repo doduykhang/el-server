@@ -285,3 +285,45 @@ func (test *TestBo) PublishTest(ctx context.Context, ID uint) (*models.Test, err
 	tx.Commit()
 	return testModel, nil
 }
+
+func (test *TestBo) UnPublishTest(ctx context.Context, ID uint) (*models.Test, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	testModel, err := models.Tests(
+		models.TestWhere.ID.EQ(ID),
+	).One(ctx, test.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if testModel.Published == 0 {
+		return nil, errors.New("Test has not been published")
+	}
+
+	userTest, err := models.UserTests(
+		models.UserTestWhere.TestID.EQ(ID),
+	).One(ctx, test.db)
+
+	if userTest != nil {
+		return nil, errors.New("User has already taken this test")
+	}
+
+	testModel.Published = 0
+	_, err = testModel.Update(ctx, test.db, boil.Infer())
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return testModel, nil
+}

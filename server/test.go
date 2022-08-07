@@ -25,6 +25,7 @@ func TestRoute(router chi.Router) {
 		r.Post("/", CreateTest)
 		r.Put("/", UpdateTest)
 		r.Put("/publish/{ID}", PublishTest)
+		r.Put("/un-publish/{ID}", UnPublishTest)
 		r.Delete("/{ID}", DeleteTest)
 	})
 
@@ -152,6 +153,25 @@ func PublishTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := testBo.PublishTest(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func UnPublishTest(w http.ResponseWriter, r *http.Request) {
+	IDString := chi.URLParam(r, "ID")
+	ID, err := util.IDFromStr(IDString)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	result, err := testBo.UnPublishTest(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)
