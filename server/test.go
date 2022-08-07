@@ -29,11 +29,14 @@ func TestRoute(router chi.Router) {
 		r.Delete("/{ID}", DeleteTest)
 	})
 
+	router.Route("/", func(r chi.Router) {
+		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
+		r.Post("/submit-test", SubmitTest)
+	})
+
 	router.Get("/{ID}", FindTest)
 	router.Get("/questions/{ID}", GetQuestions)
-
 	router.Get("/all", FindTests)
-
 }
 
 func CreateTest(w http.ResponseWriter, r *http.Request) {
@@ -172,6 +175,27 @@ func UnPublishTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := testBo.UnPublishTest(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func SubmitTest(w http.ResponseWriter, r *http.Request) {
+	var request dto.SubmitTestRequest
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	result, err := testBo.SubmitTest(r.Context(), request)
+
+	ID := util.UserIDFromContext(r.Context())
+	request.UserID = ID
 
 	if err != nil {
 		util.SadResp(err, 500, w)

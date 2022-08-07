@@ -327,3 +327,62 @@ func (test *TestBo) UnPublishTest(ctx context.Context, ID uint) (*models.Test, e
 	tx.Commit()
 	return testModel, nil
 }
+
+func (test *TestBo) SubmitTest(ctx context.Context, request dto.SubmitTestRequest) (string, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	testModel, err := models.Tests(
+		models.TestWhere.ID.EQ(request.TestID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	if testModel.Published == 0 {
+		return "", errors.New("Test has not been published")
+	}
+
+	var userTest models.UserTest
+	userTest.UserID = request.UserID
+	userTest.TestID = request.TestID
+	userTest.Score = 0
+	userTest.Time = 0
+
+	err = userTest.Insert(ctx, tx, boil.Infer())
+
+	if err != nil {
+		return "", err
+	}
+
+	questions, err := models.Questions(
+		models.QuestionWhere.TestID.EQ(testModel.ID),
+	).All(ctx, test.db)
+
+	score := 0
+	for _, question := range questions {
+		answer := ""
+		if val, ok := request.Answers[question.ID]; ok {
+			if val == question.Answer {
+				score++
+			}
+		}
+
+		var userTestDetail models.UserTestDetail
+		userTestDetail.TestID = userTest.ID
+		userTestDetail.QuestionID = request.TestID
+		userTestDetail.Answer = answer
+	}
+
+	fmt.Println(score)
+
+	return "Ok", nil
+}

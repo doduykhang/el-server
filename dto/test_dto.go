@@ -23,6 +23,13 @@ type FindTestRequest struct {
 }
 
 type FindTestResponse struct {
-	Total uint `json:"total"`
-  Data models.TestSlice `json:"data"`
+	Total uint             `json:"total"`
+	Data  models.TestSlice `json:"data"`
 }
+
+type SubmitTestRequest struct {
+	TestID  uint            `json:"testID" validate:"required"`
+	Answers map[uint]string `json:"answers" validate:"required"`
+  UserID uint 
+}
+

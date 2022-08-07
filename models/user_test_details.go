@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,9 +23,9 @@ import (
 
 // UserTestDetail is an object representing the database table.
 type UserTestDetail struct {
-	TestID     uint        `boil:"test_id" json:"testID" toml:"testID" yaml:"testID"`
-	QuestionID uint        `boil:"question_id" json:"questionID" toml:"questionID" yaml:"questionID"`
-	Answer     null.String `boil:"answer" json:"answer,omitempty" toml:"answer" yaml:"answer,omitempty"`
+	TestID     uint   `boil:"test_id" json:"testID" toml:"testID" yaml:"testID"`
+	QuestionID uint   `boil:"question_id" json:"questionID" toml:"questionID" yaml:"questionID"`
+	Answer     string `boil:"answer" json:"answer" toml:"answer" yaml:"answer"`
 
 	R *userTestDetailR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userTestDetailL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -54,38 +53,14 @@ var UserTestDetailTableColumns = struct {
 
 // Generated where
 
-type whereHelpernull_String struct{ field string }
-
-func (w whereHelpernull_String) EQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_String) NEQ(x null.String) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_String) LT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_String) LTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_String) GT(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpernull_String) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_String) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 var UserTestDetailWhere = struct {
 	TestID     whereHelperuint
 	QuestionID whereHelperuint
-	Answer     whereHelpernull_String
+	Answer     whereHelperstring
 }{
 	TestID:     whereHelperuint{field: "`user_test_details`.`test_id`"},
 	QuestionID: whereHelperuint{field: "`user_test_details`.`question_id`"},
-	Answer:     whereHelpernull_String{field: "`user_test_details`.`answer`"},
+	Answer:     whereHelperstring{field: "`user_test_details`.`answer`"},
 }
 
 // UserTestDetailRels is where relationship names are stored.

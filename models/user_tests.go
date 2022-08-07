@@ -25,11 +25,10 @@ import (
 type UserTest struct {
 	ID        uint      `boil:"id" json:"id" toml:"id" yaml:"id"`
 	StartTime time.Time `boil:"start_time" json:"startTime" toml:"startTime" yaml:"startTime"`
-	EndTime   time.Time `boil:"end_time" json:"endTime" toml:"endTime" yaml:"endTime"`
 	Score     uint      `boil:"score" json:"score" toml:"score" yaml:"score"`
-	Time      uint      `boil:"time" json:"time" toml:"time" yaml:"time"`
 	UserID    uint      `boil:"user_id" json:"userID" toml:"userID" yaml:"userID"`
 	TestID    uint      `boil:"test_id" json:"testID" toml:"testID" yaml:"testID"`
+	Time      int       `boil:"time" json:"time" toml:"time" yaml:"time"`
 
 	R *userTestR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L userTestL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -38,37 +37,33 @@ type UserTest struct {
 var UserTestColumns = struct {
 	ID        string
 	StartTime string
-	EndTime   string
 	Score     string
-	Time      string
 	UserID    string
 	TestID    string
+	Time      string
 }{
 	ID:        "id",
 	StartTime: "start_time",
-	EndTime:   "end_time",
 	Score:     "score",
-	Time:      "time",
 	UserID:    "user_id",
 	TestID:    "test_id",
+	Time:      "time",
 }
 
 var UserTestTableColumns = struct {
 	ID        string
 	StartTime string
-	EndTime   string
 	Score     string
-	Time      string
 	UserID    string
 	TestID    string
+	Time      string
 }{
 	ID:        "user_tests.id",
 	StartTime: "user_tests.start_time",
-	EndTime:   "user_tests.end_time",
 	Score:     "user_tests.score",
-	Time:      "user_tests.time",
 	UserID:    "user_tests.user_id",
 	TestID:    "user_tests.test_id",
+	Time:      "user_tests.time",
 }
 
 // Generated where
@@ -76,19 +71,17 @@ var UserTestTableColumns = struct {
 var UserTestWhere = struct {
 	ID        whereHelperuint
 	StartTime whereHelpertime_Time
-	EndTime   whereHelpertime_Time
 	Score     whereHelperuint
-	Time      whereHelperuint
 	UserID    whereHelperuint
 	TestID    whereHelperuint
+	Time      whereHelperint
 }{
 	ID:        whereHelperuint{field: "`user_tests`.`id`"},
 	StartTime: whereHelpertime_Time{field: "`user_tests`.`start_time`"},
-	EndTime:   whereHelpertime_Time{field: "`user_tests`.`end_time`"},
 	Score:     whereHelperuint{field: "`user_tests`.`score`"},
-	Time:      whereHelperuint{field: "`user_tests`.`time`"},
 	UserID:    whereHelperuint{field: "`user_tests`.`user_id`"},
 	TestID:    whereHelperuint{field: "`user_tests`.`test_id`"},
+	Time:      whereHelperint{field: "`user_tests`.`time`"},
 }
 
 // UserTestRels is where relationship names are stored.
@@ -139,9 +132,9 @@ func (r *userTestR) GetTestUserTestDetails() UserTestDetailSlice {
 type userTestL struct{}
 
 var (
-	userTestAllColumns            = []string{"id", "start_time", "end_time", "score", "time", "user_id", "test_id"}
-	userTestColumnsWithoutDefault = []string{"score", "time", "user_id", "test_id"}
-	userTestColumnsWithDefault    = []string{"id", "start_time", "end_time"}
+	userTestAllColumns            = []string{"id", "start_time", "score", "user_id", "test_id", "time"}
+	userTestColumnsWithoutDefault = []string{"score", "user_id", "test_id", "time"}
+	userTestColumnsWithDefault    = []string{"id", "start_time"}
 	userTestPrimaryKeyColumns     = []string{"id"}
 	userTestGeneratedColumns      = []string{}
 )
