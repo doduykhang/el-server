@@ -24,12 +24,15 @@ func TestRoute(router chi.Router) {
 		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.AdminRole))
 		r.Post("/", CreateTest)
 		r.Put("/", UpdateTest)
+		r.Put("/publish/{ID}", PublishTest)
 		r.Delete("/{ID}", DeleteTest)
 	})
 
 	router.Get("/{ID}", FindTest)
 	router.Get("/questions/{ID}", GetQuestions)
+
 	router.Get("/all", FindTests)
+
 }
 
 func CreateTest(w http.ResponseWriter, r *http.Request) {
@@ -130,6 +133,25 @@ func GetQuestions(w http.ResponseWriter, r *http.Request) {
 	ID, err := util.IDFromStr(IDString)
 
 	result, err := testBo.GetQuestions(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func PublishTest(w http.ResponseWriter, r *http.Request) {
+
+	IDString := chi.URLParam(r, "ID")
+	ID, err := util.IDFromStr(IDString)
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	result, err := testBo.PublishTest(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

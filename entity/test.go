@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"el.com/m/dto"
 	"el.com/m/models"
+	"el.com/m/util"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
@@ -204,4 +206,82 @@ func (test *TestBo) GetQuestions(ctx context.Context, ID uint) (*models.Question
 
 	tx.Commit()
 	return &questions, nil
+}
+
+func (test *TestBo) PublishTest(ctx context.Context, ID uint) (*models.Test, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	testModel, err := models.Tests(
+		models.TestWhere.ID.EQ(ID),
+	).One(ctx, test.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if testModel.Published == 1 {
+		return nil, errors.New("Test already published")
+	}
+
+	questionCount, err := models.Questions(
+		models.QuestionWhere.TestID.EQ(ID),
+	).Count(ctx, test.db)
+
+	if questionCount < 3 {
+		return nil, errors.New("Test has less then 3 questions")
+	}
+
+	questions, err := models.Questions(
+		models.QuestionWhere.TestID.EQ(ID),
+		models.QuestionWhere.QuestionType.EQ(util.ChoiceQuestion),
+	).All(ctx, test.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, question := range questions {
+		options, err := models.Options(
+			models.OptionWhere.QuestionID.EQ(question.ID),
+		).All(ctx, test.db)
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(options) < 2 {
+			return nil, errors.New(fmt.Sprintf("Question with id %d have less then 2 options", question.ID))
+		}
+
+		var haveAnswer bool = false
+		for _, option := range options {
+			if option.Content == question.Answer {
+				haveAnswer = true
+				break
+			}
+		}
+
+		if haveAnswer == false {
+			return nil, errors.New(fmt.Sprintf("Question with id %d does not have an answer", question.ID))
+		}
+	}
+
+	testModel.Published = 1
+
+	_, err = testModel.Update(ctx, test.db, boil.Infer())
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return testModel, nil
 }
