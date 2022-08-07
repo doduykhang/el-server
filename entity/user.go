@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"el.com/m/dto"
@@ -17,8 +16,7 @@ import (
 )
 
 var (
-	validate *validator.Validate
-	jwtKey   = []byte("my_secret_key")
+	jwtKey = []byte("my_secret_key")
 )
 
 type Claims struct {
@@ -94,7 +92,6 @@ func (user *UserBo) RegisterUser(ctx context.Context, request dto.RegisterReques
 }
 
 func (user *UserBo) Login(ctx context.Context, request dto.LoginRequest) (string, error) {
-	fmt.Println(request.Email)
 	account, err := models.Accounts(
 		models.AccountWhere.Email.EQ(request.Email),
 	).One(ctx, user.db)
@@ -123,7 +120,7 @@ func (user *UserBo) Login(ctx context.Context, request dto.LoginRequest) (string
 	}
 
 	if err != nil {
-		return  "", err
+		return "", err
 	}
 	return tokenString, nil
 }

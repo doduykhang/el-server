@@ -74,7 +74,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestMw(r chi.Router) {
-	r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
+	r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.AdminRole))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		accountID := util.UserIDFromContext(r.Context())
 		util.JSONResp(fmt.Sprintf("you are in %d", accountID), 200, w)
