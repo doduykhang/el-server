@@ -23,12 +23,13 @@ import (
 
 // Test is an object representing the database table.
 type Test struct {
-	ID        uint      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	TestName  string    `boil:"test_name" json:"testName" toml:"testName" yaml:"testName"`
-	Time      time.Time `boil:"time" json:"time" toml:"time" yaml:"time"`
-	Level     int       `boil:"level" json:"level" toml:"level" yaml:"level"`
-	ManagerID uint      `boil:"manager_id" json:"managerID" toml:"managerID" yaml:"managerID"`
-	LessonID  uint      `boil:"lesson_id" json:"lessonID" toml:"lessonID" yaml:"lessonID"`
+	ID        uint   `boil:"id" json:"id" toml:"id" yaml:"id"`
+	TestName  string `boil:"test_name" json:"testName" toml:"testName" yaml:"testName"`
+	Time      int    `boil:"time" json:"time" toml:"time" yaml:"time"`
+	Level     int    `boil:"level" json:"level" toml:"level" yaml:"level"`
+	ManagerID uint   `boil:"manager_id" json:"managerID" toml:"managerID" yaml:"managerID"`
+	LessonID  uint   `boil:"lesson_id" json:"lessonID" toml:"lessonID" yaml:"lessonID"`
+	Published int8   `boil:"published" json:"published" toml:"published" yaml:"published"`
 
 	R *testR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L testL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -41,6 +42,7 @@ var TestColumns = struct {
 	Level     string
 	ManagerID string
 	LessonID  string
+	Published string
 }{
 	ID:        "id",
 	TestName:  "test_name",
@@ -48,6 +50,7 @@ var TestColumns = struct {
 	Level:     "level",
 	ManagerID: "manager_id",
 	LessonID:  "lesson_id",
+	Published: "published",
 }
 
 var TestTableColumns = struct {
@@ -57,6 +60,7 @@ var TestTableColumns = struct {
 	Level     string
 	ManagerID string
 	LessonID  string
+	Published string
 }{
 	ID:        "tests.id",
 	TestName:  "tests.test_name",
@@ -64,6 +68,7 @@ var TestTableColumns = struct {
 	Level:     "tests.level",
 	ManagerID: "tests.manager_id",
 	LessonID:  "tests.lesson_id",
+	Published: "tests.published",
 }
 
 // Generated where
@@ -91,20 +96,45 @@ func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
+type whereHelperint8 struct{ field string }
+
+func (w whereHelperint8) EQ(x int8) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperint8) NEQ(x int8) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
+func (w whereHelperint8) LT(x int8) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperint8) LTE(x int8) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
+func (w whereHelperint8) GT(x int8) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperint8) GTE(x int8) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
+func (w whereHelperint8) IN(slice []int8) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperint8) NIN(slice []int8) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 var TestWhere = struct {
 	ID        whereHelperuint
 	TestName  whereHelperstring
-	Time      whereHelpertime_Time
+	Time      whereHelperint
 	Level     whereHelperint
 	ManagerID whereHelperuint
 	LessonID  whereHelperuint
+	Published whereHelperint8
 }{
 	ID:        whereHelperuint{field: "`tests`.`id`"},
 	TestName:  whereHelperstring{field: "`tests`.`test_name`"},
-	Time:      whereHelpertime_Time{field: "`tests`.`time`"},
+	Time:      whereHelperint{field: "`tests`.`time`"},
 	Level:     whereHelperint{field: "`tests`.`level`"},
 	ManagerID: whereHelperuint{field: "`tests`.`manager_id`"},
 	LessonID:  whereHelperuint{field: "`tests`.`lesson_id`"},
+	Published: whereHelperint8{field: "`tests`.`published`"},
 }
 
 // TestRels is where relationship names are stored.
@@ -165,9 +195,9 @@ func (r *testR) GetUserTests() UserTestSlice {
 type testL struct{}
 
 var (
-	testAllColumns            = []string{"id", "test_name", "time", "level", "manager_id", "lesson_id"}
-	testColumnsWithoutDefault = []string{"test_name", "level", "manager_id", "lesson_id"}
-	testColumnsWithDefault    = []string{"id", "time"}
+	testAllColumns            = []string{"id", "test_name", "time", "level", "manager_id", "lesson_id", "published"}
+	testColumnsWithoutDefault = []string{"test_name", "time", "level", "manager_id", "lesson_id"}
+	testColumnsWithDefault    = []string{"id", "published"}
 	testPrimaryKeyColumns     = []string{"id"}
 	testGeneratedColumns      = []string{}
 )

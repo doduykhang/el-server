@@ -27,7 +27,6 @@ type Question struct {
 	QuestionType string `boil:"question_type" json:"questionType" toml:"questionType" yaml:"questionType"`
 	Content      string `boil:"content" json:"content" toml:"content" yaml:"content"`
 	Answer       string `boil:"answer" json:"answer" toml:"answer" yaml:"answer"`
-	Position     uint   `boil:"position" json:"position" toml:"position" yaml:"position"`
 	TestID       uint   `boil:"test_id" json:"testID" toml:"testID" yaml:"testID"`
 
 	R *questionR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,14 +38,12 @@ var QuestionColumns = struct {
 	QuestionType string
 	Content      string
 	Answer       string
-	Position     string
 	TestID       string
 }{
 	ID:           "id",
 	QuestionType: "question_type",
 	Content:      "content",
 	Answer:       "answer",
-	Position:     "position",
 	TestID:       "test_id",
 }
 
@@ -55,14 +52,12 @@ var QuestionTableColumns = struct {
 	QuestionType string
 	Content      string
 	Answer       string
-	Position     string
 	TestID       string
 }{
 	ID:           "questions.id",
 	QuestionType: "questions.question_type",
 	Content:      "questions.content",
 	Answer:       "questions.answer",
-	Position:     "questions.position",
 	TestID:       "questions.test_id",
 }
 
@@ -73,14 +68,12 @@ var QuestionWhere = struct {
 	QuestionType whereHelperstring
 	Content      whereHelperstring
 	Answer       whereHelperstring
-	Position     whereHelperuint
 	TestID       whereHelperuint
 }{
 	ID:           whereHelperuint{field: "`questions`.`id`"},
 	QuestionType: whereHelperstring{field: "`questions`.`question_type`"},
 	Content:      whereHelperstring{field: "`questions`.`content`"},
 	Answer:       whereHelperstring{field: "`questions`.`answer`"},
-	Position:     whereHelperuint{field: "`questions`.`position`"},
 	TestID:       whereHelperuint{field: "`questions`.`test_id`"},
 }
 
@@ -132,8 +125,8 @@ func (r *questionR) GetUserTestDetails() UserTestDetailSlice {
 type questionL struct{}
 
 var (
-	questionAllColumns            = []string{"id", "question_type", "content", "answer", "position", "test_id"}
-	questionColumnsWithoutDefault = []string{"question_type", "content", "answer", "position", "test_id"}
+	questionAllColumns            = []string{"id", "question_type", "content", "answer", "test_id"}
+	questionColumnsWithoutDefault = []string{"question_type", "content", "answer", "test_id"}
 	questionColumnsWithDefault    = []string{"id"}
 	questionPrimaryKeyColumns     = []string{"id"}
 	questionGeneratedColumns      = []string{}

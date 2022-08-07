@@ -1461,6 +1461,7 @@ func (o WordSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, col
 
 var mySQLWordUniqueColumns = []string{
 	"id",
+	"word",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
