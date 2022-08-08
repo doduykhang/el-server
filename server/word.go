@@ -26,6 +26,12 @@ func WordRoute(router chi.Router) {
 		r.Put("/", UpdateWord)
 		r.Delete("/{ID}", DeleteWord)
 	})
+	router.Route("/user", func(r chi.Router) {
+		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
+		r.Post("/", AddWordToUser)
+		r.Get("/", GetWordsOfUser)
+		r.Delete("/", RemoveWordFromUser)
+	})
 	router.Get("/{ID}", FindWord)
 	router.Get("/all", FindWords)
 }
@@ -112,6 +118,66 @@ func FindWords(w http.ResponseWriter, r *http.Request) {
 	decoder.Decode(&request, r.URL.Query())
 
 	result, err := wordBo.FindWords(r.Context(), request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func AddWordToUser(w http.ResponseWriter, r *http.Request) {
+
+	var request dto.AddWordToUser
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	ID := util.UserIDFromContext(r.Context())
+	request.UserID = ID
+
+	result, err := wordBo.AddWordToUser(r.Context(), request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func RemoveWordFromUser(w http.ResponseWriter, r *http.Request) {
+
+	var request dto.AddWordToUser
+	err := json.NewDecoder(r.Body).Decode(&request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	ID := util.UserIDFromContext(r.Context())
+	request.UserID = ID
+
+	result, err := wordBo.RemoveWordFromUser(r.Context(), request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetWordsOfUser(w http.ResponseWriter, r *http.Request) {
+
+	ID := util.UserIDFromContext(r.Context())
+
+	result, err := wordBo.GetWordsOfUser(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

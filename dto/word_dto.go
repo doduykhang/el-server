@@ -23,3 +23,8 @@ type FindWordsResponse struct {
 	Total uint              `json:"total"`
 	Data  *models.WordSlice `json:"data"`
 }
+
+type AddWordToUser struct {
+	WordID uint `json:"wordID"`
+  UserID uint 
+}

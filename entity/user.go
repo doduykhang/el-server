@@ -124,3 +124,4 @@ func (user *UserBo) Login(ctx context.Context, request dto.LoginRequest) (string
 	}
 	return tokenString, nil
 }
+

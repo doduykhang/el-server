@@ -162,3 +162,111 @@ func (word *WordBo) FindWord(ctx context.Context, ID uint) (*models.Word, error)
 
 	return wordModels, nil
 }
+
+func (word *WordBo) AddWordToUser(ctx context.Context, request dto.AddWordToUser) (string, error) {
+	err := validate.Struct(request)
+
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := word.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	userModel, err := models.Users(
+		models.UserWhere.ID.EQ(request.UserID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	wordModel, err := models.Words(
+		models.WordWhere.ID.EQ(request.WordID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = userModel.AddWords(ctx, tx, false, wordModel)
+	if err != nil {
+		return "", err
+	}
+
+	tx.Commit()
+	return "Added", nil
+}
+
+func (word *WordBo) RemoveWordFromUser(ctx context.Context, request dto.AddWordToUser) (string, error) {
+	err := validate.Struct(request)
+
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := word.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	userModel, err := models.Users(
+		models.UserWhere.ID.EQ(request.UserID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	wordModel, err := models.Words(
+		models.WordWhere.ID.EQ(request.WordID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = userModel.RemoveWords(ctx, tx, wordModel)
+	if err != nil {
+		return "", err
+	}
+
+	tx.Commit()
+	return "Remove", nil
+}
+
+func (word *WordBo) GetWordsOfUser(ctx context.Context, ID uint) (*models.WordSlice, error) {
+	tx, err := word.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	userModel, err := models.Users(
+		models.UserWhere.ID.EQ(ID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	wordsQuery := userModel.Words()
+
+	words, err := wordsQuery.All(ctx, tx)
+
+	tx.Commit()
+	return &words, nil
+}
