@@ -139,8 +139,6 @@ func (word *WordBo) FindWords(ctx context.Context, request dto.PaginationRequest
 	}
 
 	count, err := models.Words(
-		qm.Offset(int(request.PageNum*request.PageSize)),
-		qm.Limit(int(request.PageSize)),
 	).Count(ctx, word.db)
 
 	if err != nil {

@@ -164,8 +164,6 @@ func (test *TestBo) FindTests(ctx context.Context, request dto.FindTestRequest) 
 	defer tx.Rollback()
 
 	count, err := models.Tests(
-		qm.Offset(int(request.PageNum*request.PageSize)),
-		qm.Limit(int(request.PageSize)),
 	).Count(ctx, test.db)
 
 	if err != nil {

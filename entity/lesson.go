@@ -153,10 +153,7 @@ func (lesson *LessonBo) FindLessons(ctx context.Context, request dto.PaginationR
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	count, err := models.Lessons(
-		qm.Offset(int(request.PageNum*request.PageSize)),
-		qm.Limit(int(request.PageSize)),
-	).Count(ctx, lesson.db)
+	count, err := models.Lessons().Count(ctx, lesson.db)
 
 	if err != nil {
 		return nil, err
