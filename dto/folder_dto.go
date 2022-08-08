@@ -27,3 +27,14 @@ type FindFoldersResponse struct {
 	Total uint                `json:"total"`
 	Data  *models.FolderSlice `json:"data"`
 }
+
+type AddWordToFolder struct {
+	WordID   uint `json:"wordID" validate:"required"`
+	FolderId uint `json:"folderId" validate:"required"`
+	UserId   uint
+}
+
+type GetWordRequest struct {
+	FolderId uint `json:"folderId" validate:"required"`
+	UserId   uint
+}

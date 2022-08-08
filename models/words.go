@@ -95,10 +95,12 @@ var WordWhere = struct {
 var WordRels = struct {
 	Manager string
 	Users   string
+	Folders string
 	Lessons string
 }{
 	Manager: "Manager",
 	Users:   "Users",
+	Folders: "Folders",
 	Lessons: "Lessons",
 }
 
@@ -106,6 +108,7 @@ var WordRels = struct {
 type wordR struct {
 	Manager *Manager    `boil:"Manager" json:"Manager" toml:"Manager" yaml:"Manager"`
 	Users   UserSlice   `boil:"Users" json:"Users" toml:"Users" yaml:"Users"`
+	Folders FolderSlice `boil:"Folders" json:"Folders" toml:"Folders" yaml:"Folders"`
 	Lessons LessonSlice `boil:"Lessons" json:"Lessons" toml:"Lessons" yaml:"Lessons"`
 }
 
@@ -126,6 +129,13 @@ func (r *wordR) GetUsers() UserSlice {
 		return nil
 	}
 	return r.Users
+}
+
+func (r *wordR) GetFolders() FolderSlice {
+	if r == nil {
+		return nil
+	}
+	return r.Folders
 }
 
 func (r *wordR) GetLessons() LessonSlice {
@@ -450,6 +460,21 @@ func (o *Word) Users(mods ...qm.QueryMod) userQuery {
 	return Users(queryMods...)
 }
 
+// Folders retrieves all the folder's Folders with an executor.
+func (o *Word) Folders(mods ...qm.QueryMod) folderQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.InnerJoin("`words_in_folders` on `folders`.`id` = `words_in_folders`.`folder_id`"),
+		qm.Where("`words_in_folders`.`word_id`=?", o.ID),
+	)
+
+	return Folders(queryMods...)
+}
+
 // Lessons retrieves all the lesson's Lessons with an executor.
 func (o *Word) Lessons(mods ...qm.QueryMod) lessonQuery {
 	var queryMods []qm.QueryMod
@@ -706,6 +731,137 @@ func (wordL) LoadUsers(ctx context.Context, e boil.ContextExecutor, singular boo
 				local.R.Users = append(local.R.Users, foreign)
 				if foreign.R == nil {
 					foreign.R = &userR{}
+				}
+				foreign.R.Words = append(foreign.R.Words, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadFolders allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (wordL) LoadFolders(ctx context.Context, e boil.ContextExecutor, singular bool, maybeWord interface{}, mods queries.Applicator) error {
+	var slice []*Word
+	var object *Word
+
+	if singular {
+		var ok bool
+		object, ok = maybeWord.(*Word)
+		if !ok {
+			object = new(Word)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeWord)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeWord))
+			}
+		}
+	} else {
+		s, ok := maybeWord.(*[]*Word)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeWord)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeWord))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &wordR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &wordR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.Select("`folders`.`id`, `folders`.`name`, `folders`.`user_id`, `a`.`word_id`"),
+		qm.From("`folders`"),
+		qm.InnerJoin("`words_in_folders` as `a` on `folders`.`id` = `a`.`folder_id`"),
+		qm.WhereIn("`a`.`word_id` in ?", args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load folders")
+	}
+
+	var resultSlice []*Folder
+
+	var localJoinCols []uint
+	for results.Next() {
+		one := new(Folder)
+		var localJoinCol uint
+
+		err = results.Scan(&one.ID, &one.Name, &one.UserID, &localJoinCol)
+		if err != nil {
+			return errors.Wrap(err, "failed to scan eager loaded results for folders")
+		}
+		if err = results.Err(); err != nil {
+			return errors.Wrap(err, "failed to plebian-bind eager loaded slice folders")
+		}
+
+		resultSlice = append(resultSlice, one)
+		localJoinCols = append(localJoinCols, localJoinCol)
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on folders")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for folders")
+	}
+
+	if len(folderAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.Folders = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &folderR{}
+			}
+			foreign.R.Words = append(foreign.R.Words, object)
+		}
+		return nil
+	}
+
+	for i, foreign := range resultSlice {
+		localJoinCol := localJoinCols[i]
+		for _, local := range slice {
+			if local.ID == localJoinCol {
+				local.R.Folders = append(local.R.Folders, foreign)
+				if foreign.R == nil {
+					foreign.R = &folderR{}
 				}
 				foreign.R.Words = append(foreign.R.Words, local)
 				break
@@ -1020,6 +1176,151 @@ func (o *Word) RemoveUsers(ctx context.Context, exec boil.ContextExecutor, relat
 }
 
 func removeUsersFromWordsSlice(o *Word, related []*User) {
+	for _, rel := range related {
+		if rel.R == nil {
+			continue
+		}
+		for i, ri := range rel.R.Words {
+			if o.ID != ri.ID {
+				continue
+			}
+
+			ln := len(rel.R.Words)
+			if ln > 1 && i < ln-1 {
+				rel.R.Words[i] = rel.R.Words[ln-1]
+			}
+			rel.R.Words = rel.R.Words[:ln-1]
+			break
+		}
+	}
+}
+
+// AddFolders adds the given related objects to the existing relationships
+// of the word, optionally inserting them as new records.
+// Appends related to o.R.Folders.
+// Sets related.R.Words appropriately.
+func (o *Word) AddFolders(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Folder) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		}
+	}
+
+	for _, rel := range related {
+		query := "insert into `words_in_folders` (`word_id`, `folder_id`) values (?, ?)"
+		values := []interface{}{o.ID, rel.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, query)
+			fmt.Fprintln(writer, values)
+		}
+		_, err = exec.ExecContext(ctx, query, values...)
+		if err != nil {
+			return errors.Wrap(err, "failed to insert into join table")
+		}
+	}
+	if o.R == nil {
+		o.R = &wordR{
+			Folders: related,
+		}
+	} else {
+		o.R.Folders = append(o.R.Folders, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &folderR{
+				Words: WordSlice{o},
+			}
+		} else {
+			rel.R.Words = append(rel.R.Words, o)
+		}
+	}
+	return nil
+}
+
+// SetFolders removes all previously related items of the
+// word replacing them completely with the passed
+// in related items, optionally inserting them as new records.
+// Sets o.R.Words's Folders accordingly.
+// Replaces o.R.Folders with related.
+// Sets related.R.Words's Folders accordingly.
+func (o *Word) SetFolders(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Folder) error {
+	query := "delete from `words_in_folders` where `word_id` = ?"
+	values := []interface{}{o.ID}
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err := exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+
+	removeFoldersFromWordsSlice(o, related)
+	if o.R != nil {
+		o.R.Folders = nil
+	}
+
+	return o.AddFolders(ctx, exec, insert, related...)
+}
+
+// RemoveFolders relationships from objects passed in.
+// Removes related items from R.Folders (uses pointer comparison, removal does not keep order)
+// Sets related.R.Words.
+func (o *Word) RemoveFolders(ctx context.Context, exec boil.ContextExecutor, related ...*Folder) error {
+	if len(related) == 0 {
+		return nil
+	}
+
+	var err error
+	query := fmt.Sprintf(
+		"delete from `words_in_folders` where `word_id` = ? and `folder_id` in (%s)",
+		strmangle.Placeholders(dialect.UseIndexPlaceholders, len(related), 2, 1),
+	)
+	values := []interface{}{o.ID}
+	for _, rel := range related {
+		values = append(values, rel.ID)
+	}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, query)
+		fmt.Fprintln(writer, values)
+	}
+	_, err = exec.ExecContext(ctx, query, values...)
+	if err != nil {
+		return errors.Wrap(err, "failed to remove relationships before set")
+	}
+	removeFoldersFromWordsSlice(o, related)
+	if o.R == nil {
+		return nil
+	}
+
+	for _, rel := range related {
+		for i, ri := range o.R.Folders {
+			if rel != ri {
+				continue
+			}
+
+			ln := len(o.R.Folders)
+			if ln > 1 && i < ln-1 {
+				o.R.Folders[i] = o.R.Folders[ln-1]
+			}
+			o.R.Folders = o.R.Folders[:ln-1]
+			break
+		}
+	}
+
+	return nil
+}
+
+func removeFoldersFromWordsSlice(o *Word, related []*Folder) {
 	for _, rel := range related {
 		if rel.R == nil {
 			continue

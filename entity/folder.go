@@ -187,3 +187,127 @@ func (folder *FolderBo) FindFolders(ctx context.Context, request dto.FindFolders
 	tx.Commit()
 	return &dto.FindFoldersResponse{Total: uint(count), Data: &modelsFolder}, nil
 }
+
+func (folder *FolderBo) AddWordToFolder(ctx context.Context, request dto.AddWordToFolder) (string, error) {
+	err := validate.Struct(request)
+
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := folder.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	folderModel, err := models.Folders(
+		models.FolderWhere.ID.EQ(request.FolderId),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	if folderModel.UserID != request.UserId {
+		return "", errors.New("Not your folder")
+	}
+
+	word, err := models.Words(
+		models.WordWhere.ID.EQ(request.WordID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = folderModel.AddWords(ctx, tx, false, word)
+	if err != nil {
+		return "", err
+	}
+
+	tx.Commit()
+	return "Added", nil
+}
+
+func (folder *FolderBo) RemoveToFolder(ctx context.Context, request dto.AddWordToFolder) (string, error) {
+	err := validate.Struct(request)
+
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := folder.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	folderModel, err := models.Folders(
+		models.FolderWhere.ID.EQ(request.FolderId),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	if folderModel.UserID != request.UserId {
+		return "", errors.New("Not your folder")
+	}
+
+	word, err := models.Words(
+		models.WordWhere.ID.EQ(request.WordID),
+	).One(ctx, tx)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = folderModel.RemoveWords(ctx, tx, word)
+	if err != nil {
+		return "", err
+	}
+
+	tx.Commit()
+	return "Remove", nil
+}
+
+func (folder *FolderBo) GetWordsOfFolder(ctx context.Context, request dto.GetWordRequest) (*models.WordSlice, error) {
+	err := validate.Struct(request)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := folder.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	folderModel, err := models.Folders(
+		models.FolderWhere.ID.EQ(request.FolderId),
+	).One(ctx, tx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if folderModel.UserID != request.UserId {
+		return nil, errors.New("Not your folder")
+	}
+
+	words, err := folderModel.Words().All(ctx, tx)
+
+	tx.Commit()
+	return &words, nil
+}
