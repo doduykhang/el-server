@@ -29,7 +29,7 @@ func TestRoute(router chi.Router) {
 		r.Delete("/{ID}", DeleteTest)
 	})
 
-	router.Route("/", func(r chi.Router) {
+	router.Route("/user", func(r chi.Router) {
 		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
 		r.Post("/submit-test", SubmitTest)
 	})
@@ -192,10 +192,11 @@ func SubmitTest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := testBo.SubmitTest(r.Context(), request)
-
 	ID := util.UserIDFromContext(r.Context())
 	request.UserID = ID
+
+	result, err := testBo.SubmitTest(r.Context(), request)
+
 
 	if err != nil {
 		util.SadResp(err, 500, w)

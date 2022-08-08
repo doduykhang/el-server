@@ -350,12 +350,22 @@ func (test *TestBo) SubmitTest(ctx context.Context, request dto.SubmitTestReques
 	if testModel.Published == 0 {
 		return "", errors.New("Test has not been published")
 	}
+	time := 1
+	previousTest, err := models.UserTests(
+		models.UserTestWhere.UserID.EQ(request.UserID),
+		models.UserTestWhere.TestID.EQ(request.TestID),
+		qm.OrderBy("time desc"),
+	).One(ctx, tx)
+
+	if previousTest != nil {
+		time = previousTest.Time + 1
+	}
 
 	var userTest models.UserTest
 	userTest.UserID = request.UserID
 	userTest.TestID = request.TestID
 	userTest.Score = 0
-	userTest.Time = 0
+	userTest.Time = time
 
 	err = userTest.Insert(ctx, tx, boil.Infer())
 
@@ -365,24 +375,40 @@ func (test *TestBo) SubmitTest(ctx context.Context, request dto.SubmitTestReques
 
 	questions, err := models.Questions(
 		models.QuestionWhere.TestID.EQ(testModel.ID),
-	).All(ctx, test.db)
+	).All(ctx, tx)
 
-	score := 0
+	score := 0.0
+
 	for _, question := range questions {
 		answer := ""
 		if val, ok := request.Answers[question.ID]; ok {
 			if val == question.Answer {
 				score++
 			}
+			answer = val
 		}
 
 		var userTestDetail models.UserTestDetail
 		userTestDetail.TestID = userTest.ID
-		userTestDetail.QuestionID = request.TestID
+		userTestDetail.QuestionID = question.ID
 		userTestDetail.Answer = answer
+		err = userTestDetail.Insert(ctx, tx, boil.Infer())
+
+		if err != nil {
+			return "", err
+		}
 	}
 
-	fmt.Println(score)
+	score = score / float64(len(questions))
+
+	userTest.Score = float32(score)
+	_, err = userTest.Update(ctx, tx, boil.Infer())
+
+	if err != nil {
+		return "", err
+	}
+
+	tx.Commit()
 
 	return "Ok", nil
 }

@@ -25,7 +25,7 @@ import (
 type UserTest struct {
 	ID        uint      `boil:"id" json:"id" toml:"id" yaml:"id"`
 	StartTime time.Time `boil:"start_time" json:"startTime" toml:"startTime" yaml:"startTime"`
-	Score     uint      `boil:"score" json:"score" toml:"score" yaml:"score"`
+	Score     float32   `boil:"score" json:"score" toml:"score" yaml:"score"`
 	UserID    uint      `boil:"user_id" json:"userID" toml:"userID" yaml:"userID"`
 	TestID    uint      `boil:"test_id" json:"testID" toml:"testID" yaml:"testID"`
 	Time      int       `boil:"time" json:"time" toml:"time" yaml:"time"`
@@ -68,17 +68,46 @@ var UserTestTableColumns = struct {
 
 // Generated where
 
+type whereHelperfloat32 struct{ field string }
+
+func (w whereHelperfloat32) EQ(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.EQ, x) }
+func (w whereHelperfloat32) NEQ(x float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.NEQ, x)
+}
+func (w whereHelperfloat32) LT(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LT, x) }
+func (w whereHelperfloat32) LTE(x float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelperfloat32) GT(x float32) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GT, x) }
+func (w whereHelperfloat32) GTE(x float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelperfloat32) IN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelperfloat32) NIN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
 var UserTestWhere = struct {
 	ID        whereHelperuint
 	StartTime whereHelpertime_Time
-	Score     whereHelperuint
+	Score     whereHelperfloat32
 	UserID    whereHelperuint
 	TestID    whereHelperuint
 	Time      whereHelperint
 }{
 	ID:        whereHelperuint{field: "`user_tests`.`id`"},
 	StartTime: whereHelpertime_Time{field: "`user_tests`.`start_time`"},
-	Score:     whereHelperuint{field: "`user_tests`.`score`"},
+	Score:     whereHelperfloat32{field: "`user_tests`.`score`"},
 	UserID:    whereHelperuint{field: "`user_tests`.`user_id`"},
 	TestID:    whereHelperuint{field: "`user_tests`.`test_id`"},
 	Time:      whereHelperint{field: "`user_tests`.`time`"},
