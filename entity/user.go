@@ -8,6 +8,7 @@ import (
 
 	"el.com/m/dto"
 	"el.com/m/models"
+	"el.com/m/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -20,7 +21,8 @@ var (
 )
 
 type Claims struct {
-	ID uint
+	ID     uint
+	RoleID uint
 	jwt.StandardClaims
 }
 
@@ -107,7 +109,8 @@ func (user *UserBo) Login(ctx context.Context, request dto.LoginRequest) (string
 
 	expirationTime := time.Now().Add(100 * time.Minute)
 	claims := &Claims{
-		ID: account.ID,
+		ID:     account.ID,
+		RoleID: account.RoleID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
@@ -125,3 +128,35 @@ func (user *UserBo) Login(ctx context.Context, request dto.LoginRequest) (string
 	return tokenString, nil
 }
 
+func (user *UserBo) GetProfile(ctx context.Context, request dto.GetProfileRequest) (*dto.GetProfileResponse, error) {
+	var response dto.GetProfileResponse
+	if request.RoleID == util.AdminRole {
+		manager, err := models.Managers(
+			models.ManagerWhere.ID.EQ(request.ID),
+		).One(ctx, user.db)
+
+		if err != nil {
+			return nil, err
+		}
+
+		response.FirtstName = manager.FirstName
+		response.LastName = manager.LastName
+		response.Role = "ADMIN"
+	}
+
+	if request.RoleID == util.UserRole {
+		user, err := models.Users(
+			models.UserWhere.ID.EQ(request.ID),
+		).One(ctx, user.db)
+
+		if err != nil {
+			return nil, err
+		}
+
+		response.FirtstName = user.FirstName
+		response.LastName = user.LastName
+		response.Role = "USER"
+	}
+
+	return &response, nil
+}

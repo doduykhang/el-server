@@ -7,6 +7,7 @@ import (
 
 var (
 	userIdKey = "user_id"
+	roleIdKey = "role_id"
 )
 
 func ContextWithUserID(ctx context.Context, userID uint) context.Context {
@@ -18,5 +19,17 @@ func RequestWithUserID(r *http.Request, userID uint) *http.Request {
 }
 
 func UserIDFromContext(ctx context.Context) uint {
-	return ctx.Value("user_id").(uint)
+	return ctx.Value(userIdKey).(uint)
+}
+
+func ContextWithRoleID(ctx context.Context, roleID uint) context.Context {
+	return context.WithValue(ctx, roleIdKey, roleID)
+}
+
+func RequestWithRoleID(r *http.Request, roleID uint) *http.Request {
+	return r.WithContext(ContextWithRoleID(r.Context(), roleID))
+}
+
+func RoleIDFromContext(ctx context.Context) uint {
+	return ctx.Value(roleIdKey).(uint)
 }

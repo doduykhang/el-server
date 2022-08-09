@@ -24,7 +24,12 @@ func init() {
 func UserServer(router chi.Router) {
 	router.Post("/register", Register)
 	router.Post("/login", Login)
-	router.Route("/test", TestMw)
+	router.Route("/test-admin", TestMwAdmin)
+	router.Route("/test-user", TestMwUser)
+	router.Route("/", func(r chi.Router) {
+		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.AllRole))
+		r.Get("/profile", GetProfile)
+	})
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
@@ -73,10 +78,40 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	util.JSONResp("Logged in", 200, w)
 }
 
-func TestMw(r chi.Router) {
+func GetProfile(w http.ResponseWriter, r *http.Request) {
+	var request dto.GetProfileRequest
+
+	ID := util.UserIDFromContext(r.Context())
+	RoleID := util.RoleIDFromContext(r.Context())
+	request.ID = ID
+	request.RoleID = RoleID
+
+	token, err := userBo.GetProfile(r.Context(), request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(token, 200, w)
+}
+
+func TestMwAdmin(r chi.Router) {
+
 	r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.AdminRole))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+
 		accountID := util.UserIDFromContext(r.Context())
-		util.JSONResp(fmt.Sprintf("you are in %d", accountID), 200, w)
+		util.JSONResp(fmt.Sprintf("you are in admin %d", accountID), 200, w)
+	})
+}
+
+func TestMwUser(r chi.Router) {
+
+	r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+
+		accountID := util.UserIDFromContext(r.Context())
+		util.JSONResp(fmt.Sprintf("you are in user %d", accountID), 200, w)
 	})
 }

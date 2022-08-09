@@ -15,7 +15,8 @@ var (
 )
 
 type Claims struct {
-	ID uint
+	ID     uint
+	RoleID uint
 	jwt.StandardClaims
 }
 
@@ -70,7 +71,8 @@ func EnsureAuthenticatedJwtMw(db *sql.DB, role uint) func(next http.Handler) htt
 				}
 			}
 			var id uint
-			if role == util.AdminRole {
+
+			if claims.RoleID == util.AdminRole {
 				manager, err := models.Managers(
 					models.ManagerWhere.AccountID.EQ(claims.ID),
 				).One(r.Context(), db)
@@ -83,7 +85,7 @@ func EnsureAuthenticatedJwtMw(db *sql.DB, role uint) func(next http.Handler) htt
 				id = manager.ID
 			}
 
-			if role == util.UserRole {
+			if claims.RoleID == util.UserRole {
 				user, err := models.Users(
 					models.UserWhere.AccountID.EQ(claims.ID),
 				).One(r.Context(), db)
@@ -97,6 +99,7 @@ func EnsureAuthenticatedJwtMw(db *sql.DB, role uint) func(next http.Handler) htt
 			}
 
 			r = util.RequestWithUserID(r, id)
+			r = util.RequestWithRoleID(r, claims.RoleID)
 			next.ServeHTTP(w, r)
 		})
 	}
