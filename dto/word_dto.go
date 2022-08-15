@@ -19,6 +19,12 @@ type UpdateWordRequest struct {
 	Type           string `json:"type" validate:"required"`
 }
 
+type FindWordsRequest struct {
+	PaginationRequest
+	Word   string `form:"word"`
+	UserID uint
+}
+
 type FindWordsResponse struct {
 	Total uint              `json:"total"`
 	Data  *models.WordSlice `json:"data"`
@@ -26,5 +32,20 @@ type FindWordsResponse struct {
 
 type AddWordToUser struct {
 	WordID uint `json:"wordID"`
-  UserID uint 
+	UserID uint
+}
+
+type FindWordsWithSaved struct {
+	ID             string `json:"id" boil:"id"`
+	Word           string `json:"word" boil:"word"`
+	Definition     string `json:"definition" boil:"definition"`
+	Example        string `json:"example" boil:"example"`
+	Type           string `json:"type" boil:"type"`
+	Pronounciation string `json:"pronounciation" boil:"pronounciation"`
+	Saved          bool `json:"saved" boil:"saved" `
+}
+
+type FindWordsWithSavedReponse struct {
+	Total uint                  `json:"total"`
+	Data  *[]FindWordsWithSaved `json:"data"`
 }

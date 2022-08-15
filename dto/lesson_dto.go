@@ -18,7 +18,19 @@ type UpdateLessonRequest struct {
 	Content     string `json:"content" validate:"required"`
 }
 
+type FindLessonsRequest struct {
+	PaginationRequest
+	Name string `form:"name"`
+}
+
 type FindLessonsResponse struct {
-	Total uint              `json:"total"`
+	Total uint                `json:"total"`
 	Data  *models.LessonSlice `json:"data"`
+}
+
+type FindLessonResponse struct {
+	Lesson  *models.Lesson    `json:"lesson"`
+	Words   *models.WordSlice `json:"words"`
+	Manager *models.Manager   `json:"manager"`
+	Tets    *models.TestSlice `json:"tests"`
 }

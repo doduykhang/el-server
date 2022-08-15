@@ -109,7 +109,7 @@ func FindLesson(w http.ResponseWriter, r *http.Request) {
 
 func FindLessons(w http.ResponseWriter, r *http.Request) {
 
-	var request dto.PaginationRequest
+	var request dto.FindLessonsRequest
 	decoder.Decode(&request, r.URL.Query())
 
 	result, err := lessonBo.FindLessons(r.Context(), request)

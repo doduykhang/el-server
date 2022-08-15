@@ -22,7 +22,8 @@ type GetProfileRequest struct {
 }
 
 type GetProfileResponse struct {
-	FirtstName string `json:"firtName"`
+	FirtstName string `json:"firstName"`
 	LastName   string `json:"lastName"`
 	Role       string `json:"role"`
 }
+

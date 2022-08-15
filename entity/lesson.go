@@ -119,7 +119,7 @@ func (lesson *LessonBo) DeleteLesson(ctx context.Context, ID uint) (*models.Less
 	return models, nil
 }
 
-func (lesson *LessonBo) FindLesson(ctx context.Context, ID uint) (*models.Lesson, error) {
+func (lesson *LessonBo) FindLesson(ctx context.Context, ID uint) (*dto.FindLessonResponse, error) {
 
 	tx, err := lesson.db.BeginTx(ctx, nil)
 
@@ -138,11 +138,39 @@ func (lesson *LessonBo) FindLesson(ctx context.Context, ID uint) (*models.Lesson
 		return nil, err
 	}
 
+	wordsQuery := models.Words()
+	managerQuery := models.Manager()
+	testQuery := models.Tests()
+
+	words, err := wordsQuery.All(ctx, lesson.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	manger, err := managerQuery.One(ctx, lesson.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tests, err := testQuery.All(ctx, lesson.db)
+
+	if err != nil {
+		return nil, err
+	}
+
 	tx.Commit()
-	return models, nil
+
+	return &dto.FindLessonResponse{
+		Lesson:  models,
+		Words:   &words,
+		Manager: manger,
+		Tets:    &tests,
+	}, nil
 }
 
-func (lesson *LessonBo) FindLessons(ctx context.Context, request dto.PaginationRequest) (*dto.FindLessonsResponse, error) {
+func (lesson *LessonBo) FindLessons(ctx context.Context, request dto.FindLessonsRequest) (*dto.FindLessonsResponse, error) {
 
 	tx, err := lesson.db.BeginTx(ctx, nil)
 
@@ -153,13 +181,16 @@ func (lesson *LessonBo) FindLessons(ctx context.Context, request dto.PaginationR
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	count, err := models.Lessons().Count(ctx, lesson.db)
+	count, err := models.Lessons(
+		qm.Where("lesson_name like ?", "%"+request.Name+"%"),
+	).Count(ctx, lesson.db)
 
 	if err != nil {
 		return nil, err
 	}
 
 	models, err := models.Lessons(
+		qm.Where("lesson_name like ?", "%"+request.Name+"%"),
 		qm.Offset(int(request.PageNum*request.PageSize)),
 		qm.Limit(int(request.PageSize)),
 	).All(ctx, lesson.db)

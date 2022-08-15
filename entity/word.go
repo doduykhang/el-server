@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"el.com/m/dto"
 	"el.com/m/models"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -127,11 +129,12 @@ func (word *WordBo) DeleteWord(ctx context.Context, ID uint) (*models.Word, erro
 	return wordModels, nil
 }
 
-func (word *WordBo) FindWords(ctx context.Context, request dto.PaginationRequest) (*dto.FindWordsResponse, error) {
+func (word *WordBo) FindWords(ctx context.Context, request dto.FindWordsRequest) (*dto.FindWordsResponse, error) {
 
 	words, err := models.Words(
 		qm.Offset(int(request.PageNum*request.PageSize)),
 		qm.Limit(int(request.PageSize)),
+		qm.Where("word like ?", "%"+request.Word+"%"),
 	).All(ctx, word.db)
 
 	if err != nil {
@@ -139,6 +142,7 @@ func (word *WordBo) FindWords(ctx context.Context, request dto.PaginationRequest
 	}
 
 	count, err := models.Words(
+		qm.Where("word like ?", "%"+request.Word+"%"),
 	).Count(ctx, word.db)
 
 	if err != nil {
@@ -146,6 +150,27 @@ func (word *WordBo) FindWords(ctx context.Context, request dto.PaginationRequest
 	}
 
 	return &dto.FindWordsResponse{Total: uint(count), Data: &words}, nil
+}
+
+func (word *WordBo) FindWordsWithSave(ctx context.Context, request dto.FindWordsRequest) (*dto.FindWordsWithSavedReponse, error) {
+	rawQuery := fmt.Sprintf(`call el.sp_GetWords(%d, "%s", %d, %d)`, request.UserID, request.Word, request.PageNum, request.PageSize)
+	var words []dto.FindWordsWithSaved
+	err := queries.Raw(rawQuery).Bind(ctx, word.db, &words)
+
+	if err != nil {
+		return nil, err
+	}
+
+	count, err := models.Words(
+		qm.Where("word like ?", "%"+request.Word+"%"),
+	).Count(ctx, word.db)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// return &dto.FindWordsResponse{Total: uint(count), Data: &words}, nil
+	return &dto.FindWordsWithSavedReponse{Total: uint(count), Data: &words}, nil
 }
 
 func (word *WordBo) FindWord(ctx context.Context, ID uint) (*models.Word, error) {

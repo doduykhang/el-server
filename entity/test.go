@@ -163,8 +163,7 @@ func (test *TestBo) FindTests(ctx context.Context, request dto.FindTestRequest) 
 	// Defer a rollback in case anything fails.
 	defer tx.Rollback()
 
-	count, err := models.Tests(
-	).Count(ctx, test.db)
+	count, err := models.Tests().Count(ctx, test.db)
 
 	if err != nil {
 		return nil, err
