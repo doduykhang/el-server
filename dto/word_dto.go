@@ -1,6 +1,5 @@
 package dto
 
-import "el.com/m/models"
 
 type CreateWordRequest struct {
 	Word           string `json:"word" validate:"required"`
@@ -26,8 +25,8 @@ type FindWordsRequest struct {
 }
 
 type FindWordsResponse struct {
-	Total uint              `json:"total"`
-	Data  *models.WordSlice `json:"data"`
+	Total uint                  `json:"total"`
+	Data  *[]FindWordsWithSaved `json:"data"`
 }
 
 type AddWordToUser struct {
@@ -36,13 +35,13 @@ type AddWordToUser struct {
 }
 
 type FindWordsWithSaved struct {
-	ID             string `json:"id" boil:"id"`
+	ID             uint   `json:"id" boil:"id"`
 	Word           string `json:"word" boil:"word"`
 	Definition     string `json:"definition" boil:"definition"`
 	Example        string `json:"example" boil:"example"`
 	Type           string `json:"type" boil:"type"`
 	Pronounciation string `json:"pronounciation" boil:"pronounciation"`
-	Saved          bool `json:"saved" boil:"saved" `
+	Saved          bool   `json:"saved" boil:"saved" `
 }
 
 type FindWordsWithSavedReponse struct {

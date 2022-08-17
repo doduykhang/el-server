@@ -33,8 +33,12 @@ func WordRoute(router chi.Router) {
 		r.Delete("/", RemoveWordFromUser)
 		r.Get("/search", FindWordsWithSave)
 	})
+	router.Route("/maybe", func(r chi.Router) {
+		r.Use(middlewares.MaybeAuthenticatedJwtMw(db, util.UserRole))
+		r.Get("/all", FindWords)
+	})
+
 	router.Get("/{ID}", FindWord)
-	router.Get("/all", FindWords)
 }
 
 func CreateWord(w http.ResponseWriter, r *http.Request) {
@@ -117,6 +121,9 @@ func FindWord(w http.ResponseWriter, r *http.Request) {
 func FindWords(w http.ResponseWriter, r *http.Request) {
 	var request dto.FindWordsRequest
 	decoder.Decode(&request, r.URL.Query())
+
+  userID := util.UserIDFromContext(r.Context())
+  request.UserID = userID
 
 	result, err := wordBo.FindWords(r.Context(), request)
 

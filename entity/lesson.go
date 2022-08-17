@@ -3,10 +3,12 @@ package entity
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"el.com/m/dto"
 	"el.com/m/models"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -119,7 +121,7 @@ func (lesson *LessonBo) DeleteLesson(ctx context.Context, ID uint) (*models.Less
 	return models, nil
 }
 
-func (lesson *LessonBo) FindLesson(ctx context.Context, ID uint) (*dto.FindLessonResponse, error) {
+func (lesson *LessonBo) FindLesson(ctx context.Context, ID uint, userID uint) (*dto.FindLessonResponse, error) {
 
 	tx, err := lesson.db.BeginTx(ctx, nil)
 
@@ -138,11 +140,12 @@ func (lesson *LessonBo) FindLesson(ctx context.Context, ID uint) (*dto.FindLesso
 		return nil, err
 	}
 
-	wordsQuery := models.Words()
 	managerQuery := models.Manager()
 	testQuery := models.Tests()
 
-	words, err := wordsQuery.All(ctx, lesson.db)
+	rawQuery := fmt.Sprintf(`call el.sp_GetWordsOfLesson(%d, %d)`, userID, ID)
+	var words []dto.FindWordsWithSaved
+	err = queries.Raw(rawQuery).Bind(ctx, lesson.db, &words)
 
 	if err != nil {
 		return nil, err

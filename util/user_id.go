@@ -22,6 +22,11 @@ func UserIDFromContext(ctx context.Context) uint {
 	return ctx.Value(userIdKey).(uint)
 }
 
+
+func UserIDFromContext2(ctx context.Context) interface{} {
+	return ctx.Value(userIdKey)
+}
+
 func ContextWithRoleID(ctx context.Context, roleID uint) context.Context {
 	return context.WithValue(ctx, roleIdKey, roleID)
 }

@@ -29,8 +29,8 @@ type FindLessonsResponse struct {
 }
 
 type FindLessonResponse struct {
-	Lesson  *models.Lesson    `json:"lesson"`
-	Words   *models.WordSlice `json:"words"`
-	Manager *models.Manager   `json:"manager"`
-	Tets    *models.TestSlice `json:"tests"`
+	Lesson  *models.Lesson      `json:"lesson"`
+	Words   *[]FindWordsWithSaved `json:"words"`
+	Manager *models.Manager     `json:"manager"`
+	Tets    *models.TestSlice   `json:"tests"`
 }

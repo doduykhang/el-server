@@ -131,15 +131,13 @@ func (word *WordBo) DeleteWord(ctx context.Context, ID uint) (*models.Word, erro
 
 func (word *WordBo) FindWords(ctx context.Context, request dto.FindWordsRequest) (*dto.FindWordsResponse, error) {
 
-	words, err := models.Words(
-		qm.Offset(int(request.PageNum*request.PageSize)),
-		qm.Limit(int(request.PageSize)),
-		qm.Where("word like ?", "%"+request.Word+"%"),
-	).All(ctx, word.db)
+	var wordsResponse []dto.FindWordsWithSaved
 
-	if err != nil {
-		return nil, err
-	}
+		rawQuery := fmt.Sprintf(`call el.sp_GetWords(%d, "%s", %d, %d)`, request.UserID, request.Word, request.PageNum*request.PageSize, request.PageSize)
+		err := queries.Raw(rawQuery).Bind(ctx, word.db, &wordsResponse)
+		if err != nil {
+			return nil, err
+		}
 
 	count, err := models.Words(
 		qm.Where("word like ?", "%"+request.Word+"%"),
@@ -149,11 +147,11 @@ func (word *WordBo) FindWords(ctx context.Context, request dto.FindWordsRequest)
 		return nil, err
 	}
 
-	return &dto.FindWordsResponse{Total: uint(count), Data: &words}, nil
+	return &dto.FindWordsResponse{Total: uint(count), Data: &wordsResponse}, nil
 }
 
 func (word *WordBo) FindWordsWithSave(ctx context.Context, request dto.FindWordsRequest) (*dto.FindWordsWithSavedReponse, error) {
-	rawQuery := fmt.Sprintf(`call el.sp_GetWords(%d, "%s", %d, %d)`, request.UserID, request.Word, request.PageNum, request.PageSize)
+	rawQuery := fmt.Sprintf(`call el.sp_GetWords(%d, "%s", %d, %d)`, request.UserID, request.Word, request.PageNum*request.PageSize, request.PageSize)
 	var words []dto.FindWordsWithSaved
 	err := queries.Raw(rawQuery).Bind(ctx, word.db, &words)
 
