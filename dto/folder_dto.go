@@ -28,6 +28,17 @@ type FindFoldersResponse struct {
 	Data  *models.FolderSlice `json:"data"`
 }
 
+type FindFolderWithSaveRequest struct {
+  WordID uint `form:"wordID"`
+  UserID uint 
+}
+
+type FolderWithSave struct {
+	ID    string `json:"id" boil:"id"`
+	Name  string `json:"name" boil:"name"`
+	Saved bool   `json:"saved" boil:"saved"`
+}
+
 type AddWordToFolder struct {
 	WordID   uint `json:"wordID" validate:"required"`
 	FolderId uint `json:"folderId" validate:"required"`

@@ -32,6 +32,7 @@ func FolderRoute(router chi.Router) {
 		r.Delete("/remove/{folderID}/{wordID}", RemoveWordFromFolder)
 
 		r.Get("/words/{ID}", GetWordOfFolder)
+		r.Get("/save/{ID}", GetFolderWithSave)
 	})
 }
 
@@ -212,6 +213,32 @@ func GetWordOfFolder(w http.ResponseWriter, r *http.Request) {
 	request.FolderId = folderID
 
 	result, err := folderBo.GetWordsOfFolder(r.Context(), request)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetFolderWithSave(w http.ResponseWriter, r *http.Request) {
+
+	var request dto.FindFolderWithSaveRequest
+
+	IDString := chi.URLParam(r, "ID")
+	wordID, err := util.IDFromStr(IDString)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	ID := util.UserIDFromContext(r.Context())
+	request.UserID = ID
+	request.WordID = wordID
+
+	result, err := folderBo.FindFolderWithSave(r.Context(), request)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

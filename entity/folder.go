@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"el.com/m/dto"
 	"el.com/m/models"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -154,6 +156,34 @@ func (folder *FolderBo) FindFolder(ctx context.Context, request dto.DeleteFolder
 
 	tx.Commit()
 	return models, nil
+}
+
+func (folder *FolderBo) FindFolderWithSave(ctx context.Context, request dto.FindFolderWithSaveRequest) (*[]dto.FolderWithSave, error) {
+	err := validate.Struct(request)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := folder.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	var response []dto.FolderWithSave
+
+	rawQuery := fmt.Sprintf(`call el.sp_GetFolderWithSave(%d, %d)`, request.UserID, request.WordID)
+	err = queries.Raw(rawQuery).Bind(ctx, folder.db, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+	return &response, nil
 }
 
 func (folder *FolderBo) FindFolders(ctx context.Context, request dto.FindFoldersRequest) (*dto.FindFoldersResponse, error) {
