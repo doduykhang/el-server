@@ -32,6 +32,7 @@ func TestRoute(router chi.Router) {
 	router.Route("/user", func(r chi.Router) {
 		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
 		r.Post("/submit-test", SubmitTest)
+		r.Get("/history", GetTestHistory)
 	})
 
 	router.Get("/{ID}", FindTest)
@@ -197,6 +198,19 @@ func SubmitTest(w http.ResponseWriter, r *http.Request) {
 
 	result, err := testBo.SubmitTest(r.Context(), request)
 
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetTestHistory(w http.ResponseWriter, r *http.Request) {
+
+	ID := util.UserIDFromContext(r.Context())
+
+	result, err := testBo.GetUserTests(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

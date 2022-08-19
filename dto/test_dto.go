@@ -1,6 +1,10 @@
 package dto
 
-import "el.com/m/models"
+import (
+	"time"
+
+	"el.com/m/models"
+)
 
 type CreateTestRequest struct {
 	TestName  string `json:"testName" validate:"required"`
@@ -30,6 +34,17 @@ type FindTestResponse struct {
 type SubmitTestRequest struct {
 	TestID  uint            `json:"testID" validate:"required"`
 	Answers map[uint]string `json:"answers" validate:"required"`
-  UserID uint 
+	UserID  uint
 }
 
+type GetUserTest struct {
+	ID         uint      `json:"id" boil:"id"`
+	StartTime  time.Time `json:"startTime" boil:"start_time"`
+	Time       uint      `json:"time" boil:"time"`
+	Score      float32      `json:"score" boil:"score"`
+	TestID     uint      `json:"testId" boil:"test_id"`
+	TestName   string    `json:"testName" boil:"test_name"`
+	Level      uint      `json:"level" boil:"level"`
+	LessonID   uint      `json:"lessonId" boil:"lesson_id"`
+	LessonName string    `json:"lessonName" boil:"lesson_name"`
+}

@@ -10,6 +10,7 @@ import (
 	"el.com/m/models"
 	"el.com/m/util"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
@@ -408,4 +409,28 @@ func (test *TestBo) SubmitTest(ctx context.Context, request dto.SubmitTestReques
 	tx.Commit()
 
 	return "Ok", nil
+}
+
+func (test *TestBo) GetUserTests(ctx context.Context, userID uint) (*[]dto.GetUserTest, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	var response []dto.GetUserTest
+
+	rawQuery := fmt.Sprintf(`call el.getUserTest(%d)`, userID)
+	err = queries.Raw(rawQuery).Bind(ctx, test.db, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+
+	return &response, nil
 }
