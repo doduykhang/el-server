@@ -24,6 +24,7 @@ func init() {
 func UserServer(router chi.Router) {
 	router.Post("/register", Register)
 	router.Post("/login", Login)
+	router.Post("/logout", Logout)
 	router.Route("/test-admin", TestMwAdmin)
 	router.Route("/test-user", TestMwUser)
 	router.Route("/", func(r chi.Router) {
@@ -75,6 +76,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		Expires: expiresAt,
 	})
 
+	util.JSONResp("Logged in", 200, w)
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   "",
+		Expires: time.Unix(0, 0),
+	})
 	util.JSONResp("Logged in", 200, w)
 }
 

@@ -25,17 +25,15 @@ func LessonRoute(router chi.Router) {
 		r.Post("/", CreateLesson)
 		r.Put("/", UpdateLesson)
 		r.Delete("/{ID}", DeleteLesson)
-
 		r.Post("/add-word", AddWord)
 		r.Delete("/remove-word", RemoveWord)
 	})
 
 	router.Get("/all", FindLessons)
 	router.Get("/get-words/{ID}", GetWords)
-	router.Get("/get-tests/{ID}", GetWords)
+	router.Get("/get-tests/{ID}", GetTests)
 
 	router.Route("/maybe", func(r chi.Router) {
-		r.Use(middlewares.MaybeAuthenticatedJwtMw(db, util.UserRole))
 		r.Get("/{ID}", FindLesson)
 	})
 }
@@ -101,8 +99,7 @@ func FindLesson(w http.ResponseWriter, r *http.Request) {
 	IDString := chi.URLParam(r, "ID")
 	ID, err := util.IDFromStr(IDString)
 
-	userID := util.UserIDFromContext(r.Context())
-	result, err := lessonBo.FindLesson(r.Context(), ID, userID)
+	result, err := lessonBo.FindLesson(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

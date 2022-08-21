@@ -33,10 +33,13 @@ func TestRoute(router chi.Router) {
 		r.Use(middlewares.EnsureAuthenticatedJwtMw(db, util.UserRole))
 		r.Post("/submit-test", SubmitTest)
 		r.Get("/history", GetTestHistory)
+		r.Get("/history-detail/{ID}", GetTestHistoryDetail)
+		r.Get("/test-stat/{ID}", GetUserTestStat)
 	})
 
 	router.Get("/{ID}", FindTest)
 	router.Get("/questions/{ID}", GetQuestions)
+	router.Get("/check-published/{questionID}", CheckPublished)
 	router.Get("/all", FindTests)
 }
 
@@ -211,6 +214,50 @@ func GetTestHistory(w http.ResponseWriter, r *http.Request) {
 	ID := util.UserIDFromContext(r.Context())
 
 	result, err := testBo.GetUserTests(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetTestHistoryDetail(w http.ResponseWriter, r *http.Request) {
+	IDString := chi.URLParam(r, "ID")
+	ID, err := util.IDFromStr(IDString)
+
+	result, err := testBo.GetUserTestDetail(r.Context(), ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func GetUserTestStat(w http.ResponseWriter, r *http.Request) {
+	IDString := chi.URLParam(r, "ID")
+	ID, err := util.IDFromStr(IDString)
+
+	UserID := util.UserIDFromContext(r.Context())
+
+	result, err := testBo.GetUserStat(r.Context(), UserID, ID)
+
+	if err != nil {
+		util.SadResp(err, 500, w)
+		return
+	}
+
+	util.JSONResp(result, 200, w)
+}
+
+func CheckPublished(w http.ResponseWriter, r *http.Request) {
+	IDString := chi.URLParam(r, "questionID")
+	ID, err := util.IDFromStr(IDString)
+
+	result, err := testBo.CheckTestPublished(r.Context(), ID)
 
 	if err != nil {
 		util.SadResp(err, 500, w)

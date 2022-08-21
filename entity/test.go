@@ -434,3 +434,74 @@ func (test *TestBo) GetUserTests(ctx context.Context, userID uint) (*[]dto.GetUs
 
 	return &response, nil
 }
+
+func (test *TestBo) GetUserTestDetail(ctx context.Context, testID uint) (*[]dto.GetUserTestDetail, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	var response []dto.GetUserTestDetail
+
+	rawQuery := fmt.Sprintf(`call el.getUserTestDetail(%d)`, testID)
+	err = queries.Raw(rawQuery).Bind(ctx, test.db, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+
+	return &response, nil
+}
+
+func (test *TestBo) GetUserStat(ctx context.Context, userID uint, testID uint) (*models.UserTestSlice, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	previousTest, err := models.UserTests(
+		models.UserTestWhere.UserID.EQ(userID),
+		models.UserTestWhere.TestID.EQ(testID),
+		qm.OrderBy("time asc"),
+	).All(ctx, tx)
+
+	tx.Commit()
+
+	return &previousTest, nil
+}
+
+func (test *TestBo) CheckTestPublished(ctx context.Context, questionID uint) (*models.Test, error) {
+
+	tx, err := test.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Defer a rollback in case anything fails.
+	defer tx.Rollback()
+
+	previousTest, err := models.Tests(
+		qm.Where(fmt.Sprintf("tests.id = questions.test_id and questions.id = %d", questionID)),
+		qm.From("questions"),
+	).One(ctx, tx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	tx.Commit()
+
+	return previousTest, nil
+}

@@ -30,7 +30,7 @@ type FindLessonsResponse struct {
 
 type FindLessonResponse struct {
 	Lesson  *models.Lesson      `json:"lesson"`
-	Words   *[]FindWordsWithSaved `json:"words"`
+	Words   *models.WordSlice `json:"words"`
 	Manager *models.Manager     `json:"manager"`
 	Tets    *models.TestSlice   `json:"tests"`
 }
